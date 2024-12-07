@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 
+from MachineLearningGeneralFunction import trainModel, testModel
+
 def trainSimpleCNNWithMNIST(data_folder='./dataset',input_model_path=None, output_model_path=None, learning_rate=0.001, batch_size=64, epoch=10):
     """
     Train a simple Convolutional Neural Network (CNN) on the MNIST dataset.
@@ -81,56 +83,18 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset',input_model_path=None, outpu
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    # Training loop
-    train_accuracy = []
-    train_loss = []
-    for e in range(epoch):
-        model.train()
-        running_loss = 0.0
-        correct = 0
-        total = 0
-        for data, target in train_loader:
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-            
-             # Calculate accuracy on the training set
-            _, predicted = torch.max(output, 1)
-            total += target.size(0)
-            correct += (predicted == target).sum().item()
-            
-        train_accuracy.append(100 * correct / total)
-        train_loss.append(running_loss / len(train_loader))
-        print(f"Epoch {e + 1}/{epoch}, Accuracy: {train_accuracy[-1]:.2f}%, Loss: {train_loss[-1]:.4f}")
-
-    # Testing loop
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data, target in test_loader:
-            output = model(data)
-            _, predicted = torch.max(output, 1)
-            total += target.size(0)
-            correct += (predicted == target).sum().item()
-
-    test_accuracy = 100 * correct / total
-    print(f"Test Accuracy: {test_accuracy}%")
+    
+    # Train the model
+    result = trainModel(model, train_loader, criterion, optimizer, epoch)
+    model = result["model"]
+    
+    # Test the model
+    test_accuracy = testModel(model, test_loader)
+    result["test_accuracy"] = test_accuracy
 
     # Save the trained model
     if output_model_path:
         torch.save(model.state_dict(), output_model_path)
         print(f"Model saved to {output_model_path}")
-        
-    result = {
-        "train_accuracy": train_accuracy,
-        "train_loss": train_loss,
-        "test_accuracy": test_accuracy,
-        "model": model
-    }
 
     return result

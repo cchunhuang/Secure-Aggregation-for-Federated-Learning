@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms, models
 
+from MachineLearningGeneralFunction import trainModel, testModel
+
 def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model_path=None, output_model_path=None, learning_rate=0.001, batch_size=64, epoch=10):
     """
     Train an AlexNet model on the CIFAR-10 dataset.
@@ -45,47 +47,18 @@ def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model_path=None, outp
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    # Training function
-    def train_model(model, train_loader, criterion, optimizer, epochs):
-        model.train()
-        for epoch in range(epochs):
-            running_loss = 0.0
-            for inputs, labels in train_loader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
-            print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss/len(train_loader):.4f}")
-
-    # Evaluation function
-    def evaluate_model(model, test_loader):
-        model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-        accuracy = 100 * correct / total
-        print(f"Accuracy: {accuracy:.2f}%")
-        return accuracy
-
-    # Train and evaluate
-    print("Starting training...")
-    train_model(model, train_loader, criterion, optimizer, epoch)
-    print("Testing model...")
-    evaluate_model(model, test_loader)
+    
+    # Train the model
+    result = trainModel(model, train_loader, criterion, optimizer, epoch)
+    model = result["model"]
+    
+    # Test the model
+    test_accuracy = testModel(model, test_loader)
+    result["test_accuracy"] = test_accuracy
     
     # Save the model
     if output_model_path:
         torch.save(model, output_model_path)
         print(f"Model saved to {output_model_path}")
         
-    return model
+    return result
