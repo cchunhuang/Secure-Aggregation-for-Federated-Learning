@@ -25,23 +25,7 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset',input_model_path=None, outpu
             Number of training iterations over the dataset (default is 10).
 
     Returns:
-        model \: torch.nn.Module\n
-            The trained CNN model.
-
-    Notes
-    ------
-    - The CNN architecture consists of two convolutional layers followed by pooling, a dropout layer, and two fully connected layers.
-    - The training loop uses CrossEntropyLoss and the Adam optimizer.
-    - The testing loop calculates the accuracy of the model on the test dataset.
-    - The model weights can be saved and reused for further training or evaluation.
-
-    Example Usage
-    -------------
-    - Train a new model and save it:
-        model = trainSimpleCNNWithMNIST(output_model_path="mnist_cnn.pth")
-
-    - Load a pre-trained model, fine-tune it, and save the updated model:
-        model = trainSimpleCNNWithMNIST(input_model_path="mnist_cnn.pth", output_model_path="mnist_cnn_updated.pth", epoch=5)
+        dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
     """
     
     # Define the CNN model

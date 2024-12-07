@@ -3,6 +3,16 @@ import torch
 def trainModel(model, train_loader, criterion, optimizer, epochs):
     """
     General training function for any model.
+    
+    Parameters:
+        model (torch.nn.Module): Model to train.
+        train_loader (torch.utils.data.DataLoader): Training data loader.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer.
+        epochs (int): Number of training epochs.
+        
+    Returns:
+        dict: A dictionary containing the training accuracy, training loss, and model.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -20,17 +30,12 @@ def trainModel(model, train_loader, criterion, optimizer, epochs):
             optimizer.zero_grad()
             outputs = model(inputs)
             
-            # 適應多分類與二分類的損失計算
-            if outputs.ndim > 1:  # For multi-class or multi-label tasks
-                loss = criterion(outputs, labels)
-            else:  # For binary classification tasks
-                loss = criterion(outputs.squeeze(), labels.float())
-
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
-            preds = (torch.sigmoid(outputs) > 0.5).int() if outputs.ndim == 1 else outputs.argmax(dim=1)
+            preds = (torch.sigmoid(outputs) > 0.5).int() if labels.ndim > 1 else outputs.argmax(dim=1)
             correct += (preds == labels).sum().item()
             total += labels.numel()
 
@@ -43,6 +48,17 @@ def trainModel(model, train_loader, criterion, optimizer, epochs):
 def trainModelWithValidation(model, train_loader, valid_loader, criterion, optimizer, epochs):
     """
     General training function with validation support.
+    
+    Parameters:
+        model (torch.nn.Module): Model to train.
+        train_loader (torch.utils.data.DataLoader): Training data loader.
+        valid_loader (torch.utils.data.DataLoader): Validation data loader.
+        criterion (torch.nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer.
+        epochs (int): Number of training epochs.
+        
+    Returns:
+        dict: A dictionary containing the training accuracy, training loss, validation accuracy, validation loss, and model.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -65,14 +81,14 @@ def trainModelWithValidation(model, train_loader, valid_loader, criterion, optim
             optimizer.step()
 
             running_loss += loss.item()
-            preds = (torch.sigmoid(outputs) > 0.5).int() if outputs.ndim == 1 else outputs.argmax(dim=1)
+            preds = (torch.sigmoid(outputs) > 0.5).int() if labels.ndim > 1 else outputs.argmax(dim=1)
             correct += (preds == labels).sum().item()
             total += labels.numel()
 
         train_accuracy.append(100 * correct / total)
         train_loss.append(running_loss / len(train_loader))
 
-        # 驗證階段
+        # evaluation
         model.eval()
         val_running_loss = 0.0
         val_correct = 0
@@ -82,7 +98,7 @@ def trainModelWithValidation(model, train_loader, valid_loader, criterion, optim
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
                 val_running_loss += criterion(outputs, labels).item()
-                preds = (torch.sigmoid(outputs) > 0.5).int() if outputs.ndim == 1 else outputs.argmax(dim=1)
+                preds = (torch.sigmoid(outputs) > 0.5).int() if labels.ndim > 1 else outputs.argmax(dim=1)
                 val_correct += (preds == labels).sum().item()
                 val_total += labels.numel()
 
@@ -101,6 +117,13 @@ def trainModelWithValidation(model, train_loader, valid_loader, criterion, optim
 def testModel(model, test_loader):
     """
     General testing function for any model.
+    
+    Parameters:
+        model (torch.nn.Module): Model to test.
+        test_loader (torch.utils.data.DataLoader): Test data loader.
+        
+    Returns:
+        float: Test accuracy.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -111,7 +134,7 @@ def testModel(model, test_loader):
         for inputs, labels in test_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
-            preds = (torch.sigmoid(outputs) > 0.5).int() if outputs.ndim == 1 else outputs.argmax(dim=1)
+            preds = (torch.sigmoid(outputs) > 0.5).int() if labels.ndim > 1 else outputs.argmax(dim=1)
             correct += (preds == labels).sum().item()
             total += labels.numel()
 
