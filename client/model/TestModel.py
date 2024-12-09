@@ -34,7 +34,7 @@ print(result["test_accuracy"])
 # Load a pre-trained model, fine-tune it, and save the updated model
 print("Loading a pre-trained model, fine-tuning it, and saving the updated model...")
 input_path = output_path
-output_folder = os.path.join(output_folder, "cifar10_alexnet_updated.pth")
+output_path = os.path.join(output_folder, "cifar10_alexnet_updated.pth")
 result = trainAlexNetWithCIFAR10(data_folder=dataset_folder, input_model_path=input_path, output_model_path=output_path)
 
 # Train a ResNet18 model with CelebA dataset
@@ -57,4 +57,4 @@ print(result["test_accuracy"])
 print("Loading a pre-trained model, fine-tuning it, and saving the updated model...")
 input_path = output_path
 output_path = os.path.join(output_folder, "celeba_resnet18_updated.pth")
-result = trainResNet18WithCelebA(data_folder=dataset_folder, label_file=label_file, eval_file=eval_file, input_model_path=input_path, output_model_path=output_path, epoch=3)
+result = trainResNet18WithCelebA(data_folder=dataset_folder, label_file=label_file, eval_file=eval_file, input_model_path=input_path, output_model_path=output_path)
