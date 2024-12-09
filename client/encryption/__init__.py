@@ -1,3 +1,3 @@
 from .encrypt import BlindingFactors
 
-__all__ = ['BlindingFactors']
+__all__ = ["BlindingFactors"]

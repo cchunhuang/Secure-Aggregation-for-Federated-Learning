@@ -9,7 +9,9 @@ class BlindingFactors:
         """
         self.prime = prime
 
-    def compute_blinding_factors(self, shared_keys, client_id, selected_clients, model_length, round_number):
+    def compute_blinding_factors(
+        self, shared_keys, client_id, selected_clients, model_length, round_number
+    ):
         """
         Compute the vector of blinding factors for the client.
         :param shared_keys: Dictionary of shared keys {other_client_id: CK_k,n}.
@@ -23,11 +25,20 @@ class BlindingFactors:
 
         for param_index in range(model_length):
             # Compute the blinding factor for each parameter
-            blinding_factor = sum(
-                ((-1) ** (client_id > other_id)) *
-                int(hashlib.sha256(f"{shared_keys[other_id]}||{param_index}||{round_number}".encode()).hexdigest(), 16)
-                for other_id in selected_clients if other_id != client_id
-            ) % self.prime
+            blinding_factor = (
+                sum(
+                    ((-1) ** (client_id > other_id))
+                    * int(
+                        hashlib.sha256(
+                            f"{shared_keys[other_id]}||{param_index}||{round_number}".encode()
+                        ).hexdigest(),
+                        16,
+                    )
+                    for other_id in selected_clients
+                    if other_id != client_id
+                )
+                % self.prime
+            )
             blinding_factors.append(blinding_factor)
 
         return blinding_factors

@@ -1,4 +1,5 @@
 import random
+
 from .encryption import BlindingFactors
 
 
@@ -52,11 +53,13 @@ class Client:
             client_id=self.client_id,
             selected_clients=selected_clients,
             model_length=len(model),
-            round_number=round_number
+            round_number=round_number,
         )
 
         # Apply blinding to the updated model
-        blinded_model = [(m + b) % self.prime for m, b in zip(updated_model, blinding_factors)]
+        blinded_model = [
+            (m + b) % self.prime for m, b in zip(updated_model, blinding_factors)
+        ]
         return blinded_model
 
     def dropOutHanlder(self, selected_clients, model_length, round_number):
@@ -72,6 +75,6 @@ class Client:
             client_id=self.client_id,
             selected_clients=selected_clients,
             model_length=model_length,
-            round_number=round_number
+            round_number=round_number,
         )
         return blinding_factors
