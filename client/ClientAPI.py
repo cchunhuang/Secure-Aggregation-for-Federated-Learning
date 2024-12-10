@@ -1,4 +1,4 @@
-from Client import Client
+from .Client import Client
 
 class ClientAPI:
     def __init__(self):
@@ -12,7 +12,7 @@ class ClientAPI:
         Upload the public key of the client
         
         Returns:
-            str/int: Public key of the client
+            int: Public key of the client
         '''
         return self.client.public_key
     
@@ -22,8 +22,8 @@ class ClientAPI:
         
         Parameters:
             keys (dict): Public keys of all clients
-                key (str/int): Client ID
-                value (str/int): Public key
+                key (int): Client ID
+                value (int): Public key
                 
         Returns:
             None
@@ -37,10 +37,11 @@ class ClientAPI:
         
         Parameters:
             model (torch.nn.Module): Model to update
-            selected_clients (list of str): List of selected clients
+            selected_clients (list of int): List of selected clients
             
         Returns:
             torch.nn.Module: Updated model
+            or None: if the client drop out
         '''
         return self.client.clientUpdate(model, selected_clients)
     
@@ -50,7 +51,7 @@ class ClientAPI:
 
         Parameters:
             model (torch.nn.Module): Model to update
-            selected_clients (list of str): List of selected clients
+            selected_clients (list of int): List of selected clients
             
         Returns:
             torch.nn.Module: Updated model

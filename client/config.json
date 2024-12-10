@@ -1,0 +1,30 @@
+{
+    "dataset": "MNIST",
+    "MNIST": {
+        "data_folder": "./dataset",
+        "input_model_path": null,
+        "output_model_path": null,
+        "learning_rate": null,
+        "batch_size": null,
+        "epochs": null,
+        "data_num": 100
+    },
+    "CIFAR10": {
+        "data_folder": "./dataset",
+        "input_model_path": null,
+        "output_model_path": null,
+        "learning_rate": null,
+        "batch_size": null,
+        "epochs": null,
+        "data_num": 100
+    }, 
+    "CelebA": {
+        "data_folder": "./dataset",
+        "input_model_path": null,
+        "output_model_path": null,
+        "learning_rate": null,
+        "batch_size": null,
+        "epochs": null,
+        "data_num": 100
+    }
+}

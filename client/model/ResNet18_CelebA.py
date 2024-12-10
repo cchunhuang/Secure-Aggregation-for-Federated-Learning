@@ -7,7 +7,7 @@ from torchvision import models, transforms
 from PIL import Image
 import pandas as pd
 
-from MachineLearningGeneralFunction import trainModelWithValidation, testModel
+from .MachineLearningGeneralFunction import trainModelWithValidation, testModel
 
 class CelebADataset(Dataset):
     '''

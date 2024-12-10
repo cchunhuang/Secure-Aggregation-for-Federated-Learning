@@ -33,7 +33,7 @@ class Client:
         self.shared_keys = {
             client_id: pow(key, self.private_key, self.prime)
             for client_id, key in keys.items()
-            if client_id != self.client_id
+                if client_id != self.client_id
         }
 
     def clientUpdate(self, model, selected_clients, round_number):

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 
-from MachineLearningGeneralFunction import trainModel, testModel
+from .MachineLearningGeneralFunction import trainModel, testModel
 
 def trainSimpleCNNWithMNIST(data_folder='./dataset',input_model_path=None, output_model_path=None, learning_rate=0.001, batch_size=64, epoch=10):
     """

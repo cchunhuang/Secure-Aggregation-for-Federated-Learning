@@ -1,8 +1,12 @@
 import os
+import sys
 
-from SimpleCNN import trainSimpleCNNWithMNIST
-from AlexNet import trainAlexNetWithCIFAR10
-from ResNet18 import trainResNet18WithCelebA
+# Add the root directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from client.model.SimpleCNN_MNIST import trainSimpleCNNWithMNIST
+from client.model.AlexNet_CIFAR10 import trainAlexNetWithCIFAR10
+from client.model.ResNet18_CelebA import trainResNet18WithCelebA
 
 dataset_folder = "./dataset"
 output_folder = "./output/model"
