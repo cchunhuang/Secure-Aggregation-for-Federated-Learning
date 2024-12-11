@@ -1,3 +1,3 @@
-from .blind_factor import BlindingFactors
+from .encrypt import BlindingFactors
 
 __all__ = ["BlindingFactors"]

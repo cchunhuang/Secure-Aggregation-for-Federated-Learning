@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import unittest
 import torch
-from client.encryption.encrypt import BlindingFactors
+from client.encryption import BlindingFactors
 
 class TestBlindingFactors(unittest.TestCase):
     def setUp(self):
