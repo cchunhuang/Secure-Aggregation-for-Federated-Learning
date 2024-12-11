@@ -1,6 +1,7 @@
 import hashlib
 import random
 
+
 class ComputedKeyGenerator:
     def __init__(self, prime_order_p, generator_g):
         """

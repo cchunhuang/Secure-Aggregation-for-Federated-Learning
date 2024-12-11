@@ -6,8 +6,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 import unittest
+
 import torch
+
 from client.encryption import BlindingFactors
+
 
 class TestBlindingFactors(unittest.TestCase):
     def setUp(self):
@@ -70,9 +73,16 @@ class TestBlindingFactors(unittest.TestCase):
         # Check that parameters are modified and shapes remain the same
         for original, param in zip(original_params, self.model.parameters()):
             # Ensure the shapes remain the same
-            self.assertEqual(original.shape, param.data.shape, "Parameter shape changed after blinding.")
+            self.assertEqual(
+                original.shape,
+                param.data.shape,
+                "Parameter shape changed after blinding.",
+            )
             # Ensure the values are modified
-            self.assertFalse(torch.equal(original, param.data), "Parameter values did not change after blinding.")
+            self.assertFalse(
+                torch.equal(original, param.data),
+                "Parameter values did not change after blinding.",
+            )
 
 
 if __name__ == "__main__":

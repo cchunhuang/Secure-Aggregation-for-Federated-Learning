@@ -7,14 +7,16 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Unit Test for ComputedKeyGenerator
 import unittest
+
 from client.encryption import ComputedKeyGenerator
+
 
 class TestComputedKeyGenerator(unittest.TestCase):
 
     def setUp(self):
         # Example prime order and generator
         self.prime_order_p = 23  # Example small prime
-        self.generator_g = 5    # Example generator
+        self.generator_g = 5  # Example generator
         self.key_gen = ComputedKeyGenerator(self.prime_order_p, self.generator_g)
 
     def test_key_pair_generation(self):
@@ -56,6 +58,7 @@ class TestComputedKeyGenerator(unittest.TestCase):
         private_key, public_key = self.key_gen.generate_key_pair()
         with self.assertRaises(ValueError):
             self.key_gen.compute_shared_key(private_key, self.prime_order_p + 1)
+
 
 if __name__ == "__main__":
     unittest.main()

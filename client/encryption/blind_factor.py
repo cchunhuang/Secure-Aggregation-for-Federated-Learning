@@ -1,5 +1,7 @@
-import torch
 import hashlib
+
+import torch
+
 
 class BlindingFactors:
     def __init__(self, prime=7919):
@@ -9,7 +11,9 @@ class BlindingFactors:
         """
         self.prime = prime
 
-    def compute_blinding_factors(self, shared_keys, client_id, selected_clients, model, round_number):
+    def compute_blinding_factors(
+        self, shared_keys, client_id, selected_clients, model, round_number
+    ):
         """
         Compute the vector of blinding factors for the client.
         :param shared_keys: Dictionary of shared keys {other_client_id: CK_k,n}.
@@ -20,9 +24,11 @@ class BlindingFactors:
         :return: A list representing the vector of blinding factors.
         """
         # Flatten model parameters to a single list
-        model_parameters = torch.cat([param.data.flatten() for param in model.parameters()])
+        model_parameters = torch.cat(
+            [param.data.flatten() for param in model.parameters()]
+        )
         model_length = len(model_parameters)
-        
+
         blinding_factors = []
 
         for param_index in range(model_length):
@@ -42,7 +48,11 @@ class BlindingFactors:
                 % self.prime
             )
             # Ensure blinding factor is non-negative
-            blinding_factors.append(blinding_factor if blinding_factor >= 0 else blinding_factor + self.prime)
+            blinding_factors.append(
+                blinding_factor
+                if blinding_factor >= 0
+                else blinding_factor + self.prime
+            )
 
         return torch.tensor(blinding_factors, dtype=torch.float32)
 
@@ -53,12 +63,16 @@ class BlindingFactors:
         :param blinding_factors: Tensor of blinding factors to add to the model parameters.
         :return: None (applies in-place modifications to the model).
         """
-        model_parameters = torch.cat([param.data.flatten() for param in model.parameters()])
+        model_parameters = torch.cat(
+            [param.data.flatten() for param in model.parameters()]
+        )
         blinded_parameters = (model_parameters + blinding_factors) % self.prime
 
         # Reassign blinded parameters back to the model
         current_index = 0
         for param in model.parameters():
             param_length = param.numel()
-            param.data = blinded_parameters[current_index : current_index + param_length].view_as(param)
+            param.data = blinded_parameters[
+                current_index : current_index + param_length
+            ].view_as(param)
             current_index += param_length
