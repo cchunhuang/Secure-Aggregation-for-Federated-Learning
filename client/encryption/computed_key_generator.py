@@ -30,6 +30,9 @@ class ComputedKeyGenerator:
         :param other_public_key: The public key of the other client.
         :return: The computed shared key as a hash.
         """
+        if not (1 <= other_public_key < self.p):
+            raise ValueError("Public key must be in range [1, p-1].")
+
         shared_secret = pow(other_public_key, private_key, self.p)
         shared_key = hashlib.sha256(str(shared_secret).encode()).hexdigest()
         return shared_key
@@ -39,7 +42,7 @@ class ComputedKeyGenerator:
         Compute shared keys with all other public keys.
 
         :param private_key: The private key of the client.
-        :param public_keys: A list of public keys of other clients.
+        :param public_keys: A dictionary {client_id: public_key} of other clients.
         :return: A dictionary {client_id: shared_key}
         """
         shared_keys = {}
