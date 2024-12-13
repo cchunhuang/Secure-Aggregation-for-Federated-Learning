@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from client import ClientAPI
 
@@ -7,17 +8,17 @@ class Server:
         """Initialize Server
         all_clients (dict): key (int): client ID
                             value (ClientAPI): client info
-
         """
         self.all_clients = {}
         self.all_public_keys = {}  # all clients' public keys
         self.global_model = None
         self.updates = {}
         self.selected_clients = []  # clients (ID) selected in current round
-        self.dropout_clients = []  # drop-out clients (ID)
+        self.drop_out_clients = []  # drop-out clients (ID)
         self.round_number = 1
         self.current_id = 1  # ID distributed to new client
-        self.prime = 1  # prime for compute blinding factor
+        self.prime = 2**31 - 1  # prime for compute blinding factor
+        self.model_length = 1
 
     def registerClient(self, client_api: ClientAPI):
         """
@@ -28,13 +29,16 @@ class Server:
         self.receivePublicKey(client_api.getClientID(), client_api.uploadPublicKey())
         self.current_id += 1
 
-    def initGlobalModel(self, model_size):
+    def setPrime(self, prime=2**31 - 1):
+        self.prime = prime
+        # if prime in Client need to be updated, write down here
+
+    def initGlobalModel(self):
         """
         Parameters:
-            model_size (int): size of model's parameter
+            model_length (int): size of model's parameter
         """
-        self.global_model = np.random.rand(model_size)
-        return
+        self.global_model = np.random.rand(self.model_length)
 
     def receivePublicKey(self, client_id, public_key):
         """
@@ -60,17 +64,6 @@ class Server:
         """
         return {k: v for k, v in self.all_public_keys.items() if k != client_id}
 
-    # def distributeGlobalModel(self):
-    #     """
-    #     Distribute global model to selected clients
-
-    #     Returns:
-    #         dict:
-    #             key (int): client ID
-    #             value (int): global model
-    #     """
-    #     return {client_id: self.global_model for client_id in self.selected_clients}
-
     def receiveClientUpdate(self, client_id, client_update):
         """
         Save update from client
@@ -81,37 +74,33 @@ class Server:
         """
         self.updates[client_id] = client_update
 
-    def dropOutHandler(self):
-        """_summary_
-
+    def computeUpdate(self):
+        """
+        Compute aggregated model update (include drop-out handling)
         Returns:
-            _type_: _description_
+            np.ndarray: Corrected model update after handling drop-outs
         """
         q_vectors = []
         for client_id in self.selected_clients:
-            if client_id not in self.dropout_clients:
+            if client_id not in self.drop_out_clients:
                 # send drop-out list to the client online
-                # online client compute blinding_factors and return
-                q_vec = self.all_clients[client_id].dropOutHanlder()
+                # online client compute blinding_factors and return them
+                q_vec = self.all_clients[client_id].dropOutHanlder(
+                    selected_clients=self.drop_out_clients,
+                    model_length=self.model_length,
+                    round_number=self.round_number,
+                )
                 q_vectors.append(q_vec)
+
         # compute final q vector
         q = np.sum(q_vectors, axis=0) % self.prime
+
         # adjust aggregate result
         corrected_model_update = (
             np.sum(self.updates.values(), axis=0) - q
         ) % self.prime
+
         return corrected_model_update
-
-    def aggregateUpdate(self):
-        """
-        aggregate model updates from clients
-
-        Returns:
-            np.ndarray: aggregated model
-        """
-        update_matrix = np.stack(list(self.updates.values()))
-        aggregated_update = np.mean(update_matrix, axis=0)
-        return aggregated_update
 
     def deQuantizeUpdate(self, quantized_update, scale_factor):
         """
@@ -134,22 +123,29 @@ class Server:
 
     def selectClients(self):
         """
-        Select clients to join next round
-        Update selected_clients(list of client ID)
+        Randomly select half of clients to join current round
         """
-        pass
+        num_clients = max(1, len(self.all_clients) // 2)
+        all_client_ids = list(self.all_clients.keys())
+        if num_clients > len(all_client_ids):
+            num_clients = len(all_client_ids)
+        self.selected_clients = random.sample(all_client_ids, num_clients)
 
     def runRound(self, scale_factor):
         """
-        Update selected clients and run a round
+        Update selected clients and run a new round
 
         Parameters:
             scale_factor (float): factor used in dequantize
         """
-        self.selected_clients = self.selectClients()
+        # Reset updates and drop-out clients list
+        self.updates = {}
+        self.drop_out_clients = []
 
-        # 1. distribute global model
-        # 2. receive clients update
+        # 1. Select clients (list of client ID) for this round
+        self.selectClients()
+
+        # 2. Receive updates from selected_clients
         for client_id in self.selected_clients:
             client_api = self.all_clients[client_id]
             client_update = client_api.clientUpdate(
@@ -158,14 +154,14 @@ class Server:
                 round_number=self.round_number,
             )  # if client drop-out, receive None
             if client_update is None:
-                self.dropout_clients.append(client_id)
-            self.receiveClientUpdate(client_id, client_update)
-        # 3. drop-out handling
-        corrected_model_update = self.dropOutHandler()
-        # 4. aggregate update
-        aggregated_update = self.aggregateUpdate()
-        # 5. dequantize update
-        dequantized_update = self.deQuantizeUpdate(aggregated_update, scale_factor)
-        # 6. update global model
+                self.drop_out_clients.append(client_id)
+            else:
+                self.receiveClientUpdate(client_id, client_update)
+
+        # 3. Drop-out handling & compute model update
+        corrected_model_update = self.computeUpdate()
+        # 4. Dequantize update
+        dequantized_update = self.deQuantizeUpdate(corrected_model_update, scale_factor)
+        # 5. Update global model
         self.updateGlobalModel(dequantized_update)
         self.round_number += 1

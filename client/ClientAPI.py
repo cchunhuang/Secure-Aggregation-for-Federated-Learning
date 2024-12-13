@@ -6,6 +6,18 @@ class ClientAPI:
         Initialize the client API
         '''
         self.client = Client()
+    
+    def setOnlineStatus(self, status=None):
+        """
+        Set online status
+        or randomly simulate the client's online status
+        
+        Parameters:
+            status (bool, optional): if status is None, randomly set the online status
+        """
+        self.client.setOnlineStatus(status)
+        return
+    
     def setClientID(self, c_id):
         """
         Set ID got from server

@@ -11,6 +11,7 @@ class Client:
         :param generator: Generator for the group.
         :param client_id: Unique client ID.
         """
+        self.online = True
         self.prime = prime
         self.generator = generator
         self.client_id = client_id or random.randint(1, 100000)
@@ -19,6 +20,18 @@ class Client:
         self.shared_keys = {}
         self.blinding_calculator = BlindingFactors(prime=self.prime)
 
+    def setOnlineStatus(self, status):
+        """
+        Set online status
+        or randomly simulate the client's online status
+        Parameters:
+            status (bool, optional): if status is None, randomly set the online status
+        """
+        if status is not None:
+            self.online = status
+        else:
+            self.online = random.choice([True, False])
+        
     def uploadPublicKey(self):
         """
         Upload the public key.
