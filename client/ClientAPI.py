@@ -18,6 +18,12 @@ class ClientAPI:
         self.client.setOnlineStatus(status)
         return
     
+    def isOnline(self):
+        """
+        Return client online status (bool)
+        """
+        return self.client.online
+    
     def setClientID(self, c_id):
         """
         Set ID got from server

@@ -32,6 +32,11 @@ class Server:
     def setPrime(self, prime=2**31 - 1):
         self.prime = prime
         # if prime in Client need to be updated, write down here
+        """
+        """
+
+    def setModelLength(self, length):
+        self.model_length = length
 
     def initGlobalModel(self):
         """
@@ -121,15 +126,36 @@ class Server:
         """
         self.global_model += aggregated_update
 
+    def checkOnlineClients(self):
+        """
+        Find online clients list
+
+        Returns:
+            online_clients_id (list): online clients' ID
+        """
+        online_clients_id = []
+        for client_id, client_api in self.all_clients.items():
+            if client_api.isOnline():
+                online_clients_id.append(client_id)
+
+        return online_clients_id
+
+    def reconnectClients(self):
+        """
+        Randomly (50%) recover client online status
+        """
+        for d_client_id in self.drop_out_clients:
+            if random.random() > 0.5:
+                self.all_clients[d_client_id].setOnlineStatus(True)
+        return
+
     def selectClients(self):
         """
-        Randomly select half of clients to join current round
+        Randomly select half of online clients to join current round
         """
-        num_clients = max(1, len(self.all_clients) // 2)
-        all_client_ids = list(self.all_clients.keys())
-        if num_clients > len(all_client_ids):
-            num_clients = len(all_client_ids)
-        self.selected_clients = random.sample(all_client_ids, num_clients)
+        online_clients_id = self.checkOnlineClients()
+        num_clients = max(1, len(online_clients_id) // 2)
+        self.selected_clients = random.sample(online_clients_id, num_clients)
 
     def runRound(self, scale_factor):
         """
@@ -138,15 +164,23 @@ class Server:
         Parameters:
             scale_factor (float): factor used in dequantize
         """
+        # Recover client drop-out
+        self.reconnectClients()
+
         # Reset updates and drop-out clients list
         self.updates = {}
         self.drop_out_clients = []
 
-        # 1. Select clients (list of client ID) for this round
+        # 1. Check clients online and select half of the online clients (list of client ID) for this round
         self.selectClients()
 
         # 2. Receive updates from selected_clients
         for client_id in self.selected_clients:
+            # To simulate client drop-out, uncomment the next if block
+            """
+            if random.random() < 0.2:
+                self.all_clients[client_id].setOnlineStatus()   # randomly set client is online or not
+            """
             client_api = self.all_clients[client_id]
             client_update = client_api.clientUpdate(
                 model=self.global_model,
