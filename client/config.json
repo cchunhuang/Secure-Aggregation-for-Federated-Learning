@@ -4,27 +4,31 @@
         "data_folder": "./dataset",
         "input_model_path": null,
         "output_model_path": null,
+        "train_num": 1000,
+        "test_num": 100,
         "learning_rate": null,
         "batch_size": null,
-        "epochs": null,
-        "data_num": 100
+        "epochs": null
     },
     "CIFAR10": {
         "data_folder": "./dataset",
         "input_model_path": null,
         "output_model_path": null,
+        "train_num": 2000,
+        "test_num": 200,
         "learning_rate": null,
         "batch_size": null,
-        "epochs": null,
-        "data_num": 100
+        "epochs": null
     }, 
     "CelebA": {
-        "data_folder": "./dataset",
+        "data_folder": "./dataset/CelebA/img_align_celeba",
+        "label_file": "./dataset/CelebA/list_attr_celeba.txt",
         "input_model_path": null,
         "output_model_path": null,
+        "train_num": 2000,
+        "test_num": 200,
         "learning_rate": null,
         "batch_size": null,
-        "epochs": null,
-        "data_num": 100
+        "epochs": null
     }
 }

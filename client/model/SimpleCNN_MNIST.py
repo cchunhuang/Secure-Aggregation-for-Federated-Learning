@@ -7,7 +7,7 @@ from torchvision import datasets, transforms
 from .MachineLearningGeneralFunction import trainModel, testModel
 
 def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_model_path=None, output_model_path=None, 
-                            train_num=None, test_num=None, learning_rate=0.001, batch_size=64, epoch=10):
+                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None):
     """
     Train a simple Convolutional Neural Network (CNN) on the MNIST dataset.
 
@@ -29,6 +29,13 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_mod
         dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
     """
     
+    if learning_rate == None:
+        learning_rate = 0.001
+    if batch_size == None:
+        batch_size = 64
+    if epoch == None:
+        epoch = 10
+    
     # Define the CNN model
     class CNN(nn.Module):
         def __init__(self):
@@ -48,7 +55,7 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_mod
             x = torch.relu(self.fc1(x))
             x = self.dropout(x)
             x = self.fc2(x)
-            return x
+            return x 
 
     # Data loading and preprocessing
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])

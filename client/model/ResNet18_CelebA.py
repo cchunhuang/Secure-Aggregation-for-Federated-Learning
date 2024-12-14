@@ -12,7 +12,7 @@ from .MachineLearningGeneralFunction import trainModel, testModel
 
 # Function to train ResNet18 model on the CelebA dataset
 def trainResNet18WithCelebA(data_folder, label_file, input_model=None, input_model_path=None, output_model_path=None, 
-                            train_num=None, test_num=None, learning_rate=0.001, batch_size=32, epoch=10):
+                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None):
     """
     Train a ResNet18 model on the CelebA dataset.
 
@@ -31,6 +31,13 @@ def trainResNet18WithCelebA(data_folder, label_file, input_model=None, input_mod
     Returns:
         dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
     """
+    
+    if learning_rate == None:
+        learning_rate = 0.001
+    if batch_size == None:
+        batch_size = 32
+    if epoch == None:
+        epoch = 10
 
     # Define transforms
     transform = transforms.Compose([
