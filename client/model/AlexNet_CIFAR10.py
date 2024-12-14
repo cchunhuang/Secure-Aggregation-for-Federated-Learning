@@ -1,19 +1,25 @@
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms, models
 
 from .MachineLearningGeneralFunction import trainModel, testModel
 
-def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model_path=None, output_model_path=None, learning_rate=0.001, batch_size=64, epoch=10):
+def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model=None, input_model_path=None, output_model_path=None, 
+                            train_num=None, test_num=None, learning_rate=0.001, batch_size=64, epoch=10):
     """
     Train an AlexNet model on the CIFAR-10 dataset.
 
     Parameters:
+        data_folder (str): Path to the folder containing the dataset.
+        input_model (nn.Module): Pre-trained model to use for training (optional).
         input_model_path (str): Path to the pre-trained model file (optional).
         output_model_path (str): Path to save the trained model (optional). Default is None.
-        learning_rate (float): Learning rate. Default is 0.001.
-        batch_size (int): Batch size. Default is 64.
+        train_num (int): Number of training samples to use (optional). Default is None (use all samples).
+        test_num (int): Number of testing samples to use (optional). Default is None (use all samples).
+        learning_rate (float): Learning rate for the optimizer. Default is 0.001.
+        batch_size (int): Batch size for training. Default is 64.
         epoch (int): Number of training epochs. Default is 10.
         
     Returns:
@@ -29,13 +35,23 @@ def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model_path=None, outp
     
     # Load CIFAR-10 dataset
     train_dataset = datasets.CIFAR10(root=data_folder, train=True, download=True, transform=transform)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
     test_dataset = datasets.CIFAR10(root=data_folder, train=False, download=True, transform=transform)
+    
+    if train_num != None:
+        train_indices = np.random.choice(len(train_dataset), train_num, replace=False)
+        train_dataset = torch.utils.data.Subset(train_dataset, train_indices)
+    if test_num != None:
+        test_indices = np.random.choice(len(test_dataset), test_num, replace=False)
+        test_dataset = torch.utils.data.Subset(test_dataset, test_indices)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     # Load AlexNet model
-    if input_model_path:
+    if input_model:
+        model = input_model
+        print("Using customed pre-trained model.")
+    elif input_model_path:
         model = torch.load(input_model_path)  # Load custom pre-trained model
         print(f"Loaded pre-trained model from {input_model_path}")
     else:
