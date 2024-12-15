@@ -35,17 +35,20 @@ class BlindingFactors:
             # Compute the blinding factor for each parameter
             blinding_factor = (
                 sum(
-                    ((-1) ** (client_id > other_id))
-                    * int(
-                        hashlib.sha256(
-                            f"{shared_keys[other_id]}{param_index}{round_number}".encode()
-                        ).hexdigest(),
-                        16,
+                    (-1 if client_id > other_id else 1)
+                    * (
+                        int(
+                            hashlib.sha256(
+                                f"{shared_keys[other_id]}{param_index}{round_number}".encode()
+                            ).hexdigest(),
+                            16,
+                        )
+                        % self.prime
                     )
                     for other_id in selected_clients
                     if other_id != client_id
                 )
-                % self.prime
+                # % self.prime
             )
             blinding_factors.append(blinding_factor)
             # # Ensure blinding factor is non-negative
@@ -67,7 +70,7 @@ class BlindingFactors:
         model_parameters = torch.cat(
             [param.data.flatten() for param in model.parameters()]
         )
-        blinded_parameters = (model_parameters + blinding_factors) % self.prime
+        blinded_parameters = model_parameters + blinding_factors % self.prime
 
         # Reassign blinded parameters back to the model
         current_index = 0
