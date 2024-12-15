@@ -29,7 +29,7 @@ class Client:
         self.blinding_calculator = BlindingFactors(prime=self.prime)
         
         if config_path is None:
-            self.config_path = './client/config.json'
+            self.config_path = './model/config.json'
         else:
             self.config_path = config_path
 
@@ -73,7 +73,7 @@ class Client:
             round_number (int): current round number
             
         Returns:
-            list: updated model with blinding factors
+            torch.nn.Module: updated model
         """
         if self.online == False:
             return None
@@ -90,8 +90,10 @@ class Client:
         with torch.no_grad():
             for param, blind in zip(updated_model.parameters(), blinding_factors):
                 param.add_(blind)
+                
+        # self.blinding_factors = blinding_factors
         
-        return updated_model, blinding_factors
+        return updated_model
 
     def dropOutHanlder(self, selected_clients, model, round_number):
         """
@@ -103,7 +105,7 @@ class Client:
             round_number (int): current round number
             
         Returns:
-            list: compensation blinding factors
+            torch.Tensor: compensation blinding factors
         """
         blinding_factors = self.blinding_calculator.compute_blinding_factors(
             shared_keys=self.shared_keys, client_id=self.client_id,

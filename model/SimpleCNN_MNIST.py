@@ -7,7 +7,7 @@ from torchvision import datasets, transforms
 from .MachineLearningGeneralFunction import trainModel, testModel
 
 def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_model_path=None, output_model_path=None, 
-                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None):
+                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None, get_default_model=False):
     """
     Train a simple Convolutional Neural Network (CNN) on the MNIST dataset.
 
@@ -24,6 +24,7 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_mod
         learning_rate (float): Learning rate for the optimizer. Default is 0.001.
         batch_size (int): Batch size for training. Default is 64.
         epoch (int): Number of training epochs. Default is 10.
+        get_default_model (bool): If True, return the default model without training. Default is False.
 
     Returns:
         dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
@@ -57,6 +58,23 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_mod
             x = self.fc2(x)
             return x 
 
+    # Initialize model, loss, and optimizer
+    model = CNN()
+    if get_default_model:
+        return model
+    
+    if input_model:
+        model = input_model
+        print("Using customed pre-trained model.")
+    elif input_model_path:
+        model.load_state_dict(torch.load(input_model_path, weights_only=True))
+        print(f"Loaded pre-trained model from {input_model_path}")
+    else:
+        print("Using default model initialization.")
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
     # Data loading and preprocessing
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
     train_data = datasets.MNIST(root=data_folder, train=True, download=True, transform=transform)
@@ -71,20 +89,6 @@ def trainSimpleCNNWithMNIST(data_folder='./dataset', input_model=None, input_mod
 
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
-
-    # Initialize model, loss, and optimizer
-    model = CNN()
-    if input_model:
-        model = input_model
-        print("Using customed pre-trained model.")
-    elif input_model_path:
-        model.load_state_dict(torch.load(input_model_path, weights_only=True))
-        print(f"Loaded pre-trained model from {input_model_path}")
-    else:
-        print("Using default model initialization.")
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     # Train the model
     result = trainModel(model, train_loader, criterion, optimizer, epoch)

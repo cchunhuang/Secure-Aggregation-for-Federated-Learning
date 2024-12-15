@@ -12,7 +12,7 @@ from .MachineLearningGeneralFunction import trainModel, testModel
 
 # Function to train ResNet18 model on the CelebA dataset
 def trainResNet18WithCelebA(data_folder, label_file, input_model=None, input_model_path=None, output_model_path=None, 
-                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None):
+                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None, get_default_model=False):
     """
     Train a ResNet18 model on the CelebA dataset.
 
@@ -27,6 +27,7 @@ def trainResNet18WithCelebA(data_folder, label_file, input_model=None, input_mod
         learning_rate (float): Learning rate. Default is 0.001.
         batch_size (int): Batch size. Default is 32.
         epoch (int): Number of training epochs. Default is 10.
+        get_default_model (bool): If True, return the default model without training. Default is False.
 
     Returns:
         dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
@@ -38,6 +39,11 @@ def trainResNet18WithCelebA(data_folder, label_file, input_model=None, input_mod
         batch_size = 32
     if epoch == None:
         epoch = 10
+        
+    if get_default_model:
+        model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+        model.fc = nn.Linear(model.fc.in_features, 40)  # Output size matches number of attributes
+        return model
 
     # Define transforms
     transform = transforms.Compose([

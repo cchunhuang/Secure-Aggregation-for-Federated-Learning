@@ -7,7 +7,7 @@ from torchvision import datasets, transforms, models
 from .MachineLearningGeneralFunction import trainModel, testModel
 
 def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model=None, input_model_path=None, output_model_path=None, 
-                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None):
+                            train_num=None, test_num=None, learning_rate=None, batch_size=None, epoch=None, get_default_model=False):
     """
     Train an AlexNet model on the CIFAR-10 dataset.
 
@@ -21,10 +21,15 @@ def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model=None, input_mod
         learning_rate (float): Learning rate for the optimizer. Default is 0.001.
         batch_size (int): Batch size for training. Default is 64.
         epoch (int): Number of training epochs. Default is 10.
+        get_default_model (bool): If True, return the default model without training. Default is False.
         
     Returns:
         dict: A dictionary containing the training accuracy, training loss, test accuracy, and model.
     """
+    
+    if get_default_model:
+        model = models.alexnet(weights=models.AlexNet_Weights.IMAGENET1K_V1)
+        return model
     
     if learning_rate == None:
         learning_rate = 0.001
