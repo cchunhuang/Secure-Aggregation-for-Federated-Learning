@@ -46,7 +46,7 @@ class ClientAPI:
         Returns:
             int: Public key of the client
         '''
-        return self.client.public_key
+        return self.client.uploadPublicKey()
     
     def downLoadPublicKey(self, keys:dict):
         '''
@@ -78,7 +78,7 @@ class ClientAPI:
         '''
         return self.client.clientUpdate(model, selected_clients, round_number)
     
-    def dropOutHanlder(self, model, selected_clients:list):
+    def dropOutHanlder(self, model, selected_clients:list, round_number):
         '''
         Handle the drop-out clients
 
@@ -89,4 +89,4 @@ class ClientAPI:
         Returns:
             torch.nn.Module: Updated model
         '''
-        return self.client.dropOutHanlder(selected_clients)
+        return self.client.dropOutHanlder(selected_clients, model, round_number)

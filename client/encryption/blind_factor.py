@@ -38,7 +38,7 @@ class BlindingFactors:
                     ((-1) ** (client_id > other_id))
                     * int(
                         hashlib.sha256(
-                            f"{shared_keys[other_id]}||{param_index}||{round_number}".encode()
+                            f"{shared_keys[other_id]}{param_index}{round_number}".encode()
                         ).hexdigest(),
                         16,
                     )
@@ -47,12 +47,13 @@ class BlindingFactors:
                 )
                 % self.prime
             )
-            # Ensure blinding factor is non-negative
-            blinding_factors.append(
-                blinding_factor
-                if blinding_factor >= 0
-                else blinding_factor + self.prime
-            )
+            blinding_factors.append(blinding_factor)
+            # # Ensure blinding factor is non-negative
+            # blinding_factors.append(
+            #     blinding_factor
+            #     if blinding_factor >= 0
+            #     else blinding_factor + self.prime
+            # )
 
         return torch.tensor(blinding_factors, dtype=torch.float32)
 

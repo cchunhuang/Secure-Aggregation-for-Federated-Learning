@@ -23,6 +23,8 @@ def modelTraining(config_path:str, input_model=None):
     else:
         raise Exception(f"Unsupported dataset: {config.dataset}")
     
+    return result
+    
     
 if __name__ == "__main__":    
     config_path = "./client/config.json"

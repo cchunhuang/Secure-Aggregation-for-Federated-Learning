@@ -1,29 +1,43 @@
+import torch
 import random
 
-from .encryption import BlindingFactors
-
+from client.encryption import BlindingFactors, ComputedKeyGenerator
+from client.ModelTraining import modelTraining
 
 class Client:
-    def __init__(self, prime=7919, generator=5, client_id=None):
+    def __init__(self, prime=7919, generator=5, client_id=None, config_path=None): 
         """
         Initialize the client with key generation and blinding factors calculator.
-        :param prime: Prime number used for key generation.
-        :param generator: Generator for the group.
-        :param client_id: Unique client ID.
+        
+        Parameters:
+            prime (int): prime number for key generation
+            generator (int): generator for key generation
+            client_id (int, optional): client ID
         """
         self.online = True
         self.prime = prime
         self.generator = generator
-        self.client_id = client_id or random.randint(1, 100000)
-        self.private_key = random.randint(1, self.prime - 1)
-        self.public_key = pow(self.generator, self.private_key, self.prime)
+        
+        if client_id is None:
+            self.client_id = random.randint(1, 100000)
+        else:
+            self.client_id = client_id
+        
+        self.key_generator = ComputedKeyGenerator(prime, generator)
+        self.private_key, self.public_key = self.key_generator.generate_key_pair()
         self.shared_keys = {}
         self.blinding_calculator = BlindingFactors(prime=self.prime)
+        
+        if config_path is None:
+            self.config_path = './client/config.json'
+        else:
+            self.config_path = config_path
 
     def setOnlineStatus(self, status):
         """
         Set online status
         or randomly simulate the client's online status
+        
         Parameters:
             status (bool, optional): if status is None, randomly set the online status
         """
@@ -41,53 +55,58 @@ class Client:
     def downLoadPublicKey(self, keys):
         """
         Download other clients' public keys and compute shared keys.
-        :param keys: Dictionary containing public keys of other clients.
+        
+        Parameters:
+            keys (dict): Public keys of all clients
+                key (int): Client ID
+                value (int): Public key
         """
-        self.shared_keys = {
-            client_id: pow(key, self.private_key, self.prime)
-            for client_id, key in keys.items()
-                if client_id != self.client_id
-        }
+        self.shared_keys = self.key_generator.compute_all_shared_keys(private_key=self.private_key, public_keys=keys)
 
     def clientUpdate(self, model, selected_clients, round_number):
         """
         Perform model update and return the blinded model.
-        :param model: Current model parameters (list).
-        :param selected_clients: List of IDs of selected clients for this round.
-        :param round_number: Current round number.
-        :return: Blinded model parameters (list).
+        
+        Parameters:
+            model (torch.nn.Module): model parameters
+            selected_clients (list): list of selected clients
+            round_number (int): current round number
+            
+        Returns:
+            list: updated model with blinding factors
         """
-        # Simulate local training (adding random noise to the model parameters)
-        updated_model = [x + random.randint(-10, 10) for x in model]
+        if self.online == False:
+            return None
+        
+        training_result = modelTraining(self.config_path, model)
+        updated_model = training_result['model']
 
         # Compute blinding factors using the BlindingFactors class
         blinding_factors = self.blinding_calculator.compute_blinding_factors(
-            shared_keys=self.shared_keys,
-            client_id=self.client_id,
-            selected_clients=selected_clients,
-            model_length=len(model),
-            round_number=round_number,
-        )
+            shared_keys=self.shared_keys, client_id=self.client_id,
+            selected_clients=selected_clients, model=updated_model, round_number=round_number)
 
         # Apply blinding to the updated model
-        blinded_model = [
-            (m + b) % self.prime for m, b in zip(updated_model, blinding_factors)
-        ]
-        return blinded_model
+        with torch.no_grad():
+            for param, blind in zip(updated_model.parameters(), blinding_factors):
+                param.add_(blind)
+        
+        return updated_model, blinding_factors
 
-    def dropOutHanlder(self, selected_clients, model_length, round_number):
+    def dropOutHanlder(self, selected_clients, model, round_number):
         """
         Handle dropout clients by generating compensation blinding factors.
-        :param selected_clients: List of IDs of selected clients for this round.
-        :param model_length: Number of parameters in the model.
-        :param round_number: Current round number.
-        :return: Compensation blinding factor sum.
+        
+        Parameters:
+            selected_clients (list): list of selected clients
+            model_length (int): length of the model
+            round_number (int): current round number
+            
+        Returns:
+            list: compensation blinding factors
         """
         blinding_factors = self.blinding_calculator.compute_blinding_factors(
-            shared_keys=self.shared_keys,
-            client_id=self.client_id,
-            selected_clients=selected_clients,
-            model_length=model_length,
-            round_number=round_number,
-        )
+            shared_keys=self.shared_keys, client_id=self.client_id,
+            selected_clients=selected_clients, model=model, round_number=round_number)
+        
         return blinding_factors
