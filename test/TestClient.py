@@ -13,7 +13,7 @@ from client.Client import Client
 config_path = "./model/config.json"
 config = loadConfig(config_path)
 
-client_num = 10
+client_num = 6
 dropout_num = 3
 clients = [Client(client_id=i) for i in range(client_num)]
 
@@ -50,6 +50,7 @@ for round_number in range(rounds):
             print(f'Client {client.client_id} is offline')
         
     # handle dropout clients
+    print('*****Handling dropout clients*****')
     dropout_blinding_factors = []
     for client in clients:
         if client.online:

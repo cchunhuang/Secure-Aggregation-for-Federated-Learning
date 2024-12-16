@@ -10,7 +10,7 @@ def get_defualt_model(config_path='./model/config.json'):
     elif config.dataset == "CIFAR10":
         model = trainAlexNetWithCIFAR10(get_default_model=True)
     elif config.dataset == "CelebA":
-        model = trainResNet18WithCelebA(get_default_model=True)
+        model = trainResNet18WithCelebA(data_folder=None, label_file=None, get_default_model=True)
     else:
         raise Exception(f"Unsupported dataset: {config.dataset}")
     return model

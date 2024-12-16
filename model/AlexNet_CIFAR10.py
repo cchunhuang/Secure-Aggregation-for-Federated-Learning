@@ -29,6 +29,7 @@ def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model=None, input_mod
     
     if get_default_model:
         model = models.alexnet(weights=models.AlexNet_Weights.IMAGENET1K_V1)
+        model.classifier[6] = nn.Linear(4096, 10) # Modify the classifier to match CIFAR-10 (10 classes)
         return model
     
     if learning_rate == None:
@@ -68,10 +69,10 @@ def trainAlexNetWithCIFAR10(data_folder='./dataset', input_model=None, input_mod
         print(f"Loaded pre-trained model from {input_model_path}")
     else:
         model = models.alexnet(weights=models.AlexNet_Weights.IMAGENET1K_V1)  # Use ImageNet pre-trained model
+        model.classifier[6] = nn.Linear(4096, 10) # Modify the classifier to match CIFAR-10 (10 classes)
         print("Using default pre-trained AlexNet model.")
     
-    # Modify the classifier to match CIFAR-10 (10 classes)
-    model.classifier[6] = nn.Linear(4096, 10)
+    
 
     # Set device and define loss and optimizer
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
