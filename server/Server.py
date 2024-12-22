@@ -1,5 +1,12 @@
+import copy
 import random
 import numpy as np
+import os
+import sys
+
+import torch
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from client import ClientAPI
 
 
@@ -76,22 +83,40 @@ class Server:
             if client_id not in self.drop_out_clients:
                 # send drop-out list to the client online
                 # online client compute blinding_factors and return them
+                model_copy = copy.deepcopy(self.global_model)
                 q_vec = self.all_clients[client_id].dropOutHanlder(
-                    model=self.global_model,
+                    model=model_copy,
                     selected_clients=self.drop_out_clients,
                     round_number=self.round_number,
                 )
                 q_vectors.append(q_vec)
 
         # compute final q vector
-        q = np.sum(q_vectors, axis=0) % self.prime
+        # with torch.no_grad():
+        blinding_sum = torch.zeros_like(q_vectors[0])  # Initialize with zeros
+        for blinding in q_vectors:
+            blinding_sum -= blinding
+        # q = np.sum(q_vectors, axis=0) % self.prime
 
         # adjust aggregate result
-        corrected_model_update = (
-            np.sum(self.updates.values(), axis=0) - q
-        ) % self.prime
+        corrected_model_update = list(self.updates.values())
+        with torch.no_grad():
+            for param, blind in zip(
+                corrected_model_update[0].parameters(), blinding_sum
+            ):
+                param.add_(blind)
+            # (
+            #     np.sum(self.updates.values(), axis=0) - q
+            # ) % self.prime
+            aggregated_model = copy.deepcopy(corrected_model_update[0])
+            for param, stacked_updates in zip(
+                aggregated_model.parameters(),
+                zip(*[update.parameters() for update in corrected_model_update]),
+            ):
+                stacked_updates = torch.stack(list(stacked_updates), dim=0)
+                param.copy_(torch.mean(stacked_updates, dim=0))
 
-        return corrected_model_update
+        return aggregated_model
 
     def deQuantizeUpdate(self, quantized_update, scale_factor):
         """
@@ -110,7 +135,15 @@ class Server:
         Parameters:
             aggregated_update (np.ndarray): from aggregateUpdate
         """
-        self.global_model += aggregated_update
+        # self.global_model += aggregated_update
+        with torch.no_grad():
+            aggregated_update = aggregated_update.to(
+                next(self.global_model.parameters()).device
+            )
+            for global_param, update_param in zip(
+                self.global_model.parameters(), aggregated_update.parameters()
+            ):
+                global_param.add_(update_param)
 
     def checkOnlineClients(self):
         """
@@ -143,12 +176,9 @@ class Server:
         num_clients = max(1, len(online_clients_id) // 2)
         self.selected_clients = random.sample(online_clients_id, num_clients)
 
-    def runRound(self, scale_factor):
+    def runRound(self):
         """
         Update selected clients and run a new round
-
-        Parameters:
-            scale_factor (float): factor used in dequantize
         """
         # Recover client drop-out
         self.reconnectClients()
@@ -159,22 +189,28 @@ class Server:
 
         # 1. Check clients online and select half of the online clients (list of client ID) for this round
         self.selectClients()
+        print(
+            f"*****Client selected for {self.round_number} th round*****\n{self.selected_clients}\n**********"
+        )
 
         # 2. Receive updates from selected_clients
         for client_id in self.selected_clients:
+            print(f"\n*****Round: {self.round_number}, Client: {client_id}*****")
             # To simulate client drop-out, uncomment the next if block
             if random.random() < 0.2:
                 self.all_clients[
                     client_id
                 ].setOnlineStatus()  # randomly set client is online or not
 
+            model_copy = copy.deepcopy(self.global_model)
             client_api = self.all_clients[client_id]
             client_update = client_api.clientUpdate(
-                model=self.global_model,
+                model=model_copy,
                 selected_clients=self.selected_clients,
                 round_number=self.round_number,
             )  # if client drop-out, receive None
             if client_update is None:
+                print(f"\n*****Client {client_id} is offline*****\n")
                 self.drop_out_clients.append(client_id)
             else:
                 self.receiveClientUpdate(client_id, client_update)
