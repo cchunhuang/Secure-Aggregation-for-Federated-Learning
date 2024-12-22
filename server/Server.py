@@ -25,6 +25,7 @@ class Server:
         self.round_number = 0
         self.current_id = 1  # ID distributed to new client
         self.prime = 2**31 - 1  # prime for compute blinding factor
+        self.output_dir = ""
 
     def registerClient(self, client_api: ClientAPI):
         """
@@ -136,14 +137,14 @@ class Server:
             aggregated_update (np.ndarray): from aggregateUpdate
         """
         # self.global_model += aggregated_update
-        with torch.no_grad():
-            aggregated_update = aggregated_update.to(
-                next(self.global_model.parameters()).device
-            )
-            for global_param, update_param in zip(
-                self.global_model.parameters(), aggregated_update.parameters()
-            ):
-                global_param.add_(update_param)
+        self.global_model = aggregated_update
+        # Save model
+        output_model_path = os.path.join(
+            self.output_dir, str(self.round_number) + ".pth"
+        )
+        if output_model_path:
+            torch.save(self.global_model.state_dict(), output_model_path)
+            print(f"Model saved to {output_model_path}")
 
     def checkOnlineClients(self):
         """
@@ -190,7 +191,7 @@ class Server:
         # 1. Check clients online and select half of the online clients (list of client ID) for this round
         self.selectClients()
         print(
-            f"*****Client selected for {self.round_number} th round*****\n{self.selected_clients}\n**********"
+            f"\n*****Client selected for {self.round_number} th round*****\n{self.selected_clients}\n**********"
         )
 
         # 2. Receive updates from selected_clients

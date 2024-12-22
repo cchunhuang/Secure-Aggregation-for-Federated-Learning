@@ -6,3 +6,8 @@ dataset
 output
 
 model/config.json
+result.zip
+result_MNIST.zip
+model/config.json
+model/config.json
+model/config.json
