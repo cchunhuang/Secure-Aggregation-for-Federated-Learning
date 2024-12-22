@@ -15,10 +15,9 @@ class Server:
         self.updates = {}
         self.selected_clients = []  # clients (ID) selected in current round
         self.drop_out_clients = []  # drop-out clients (ID)
-        self.round_number = 1
+        self.round_number = 0
         self.current_id = 1  # ID distributed to new client
         self.prime = 2**31 - 1  # prime for compute blinding factor
-        self.model_length = 1
 
     def registerClient(self, client_api: ClientAPI):
         """
@@ -31,19 +30,6 @@ class Server:
 
     def setPrime(self, prime=2**31 - 1):
         self.prime = prime
-        # if prime in Client need to be updated, write down here
-        """
-        """
-
-    def setModelLength(self, length):
-        self.model_length = length
-
-    def initGlobalModel(self):
-        """
-        Parameters:
-            model_length (int): size of model's parameter
-        """
-        self.global_model = np.random.rand(self.model_length)
 
     def receivePublicKey(self, client_id, public_key):
         """
@@ -91,8 +77,8 @@ class Server:
                 # send drop-out list to the client online
                 # online client compute blinding_factors and return them
                 q_vec = self.all_clients[client_id].dropOutHanlder(
+                    model=self.global_model,
                     selected_clients=self.drop_out_clients,
-                    model_length=self.model_length,
                     round_number=self.round_number,
                 )
                 q_vectors.append(q_vec)
@@ -177,10 +163,11 @@ class Server:
         # 2. Receive updates from selected_clients
         for client_id in self.selected_clients:
             # To simulate client drop-out, uncomment the next if block
-            """
             if random.random() < 0.2:
-                self.all_clients[client_id].setOnlineStatus()   # randomly set client is online or not
-            """
+                self.all_clients[
+                    client_id
+                ].setOnlineStatus()  # randomly set client is online or not
+
             client_api = self.all_clients[client_id]
             client_update = client_api.clientUpdate(
                 model=self.global_model,
@@ -195,7 +182,7 @@ class Server:
         # 3. Drop-out handling & compute model update
         corrected_model_update = self.computeUpdate()
         # 4. Dequantize update
-        dequantized_update = self.deQuantizeUpdate(corrected_model_update, scale_factor)
+        # dequantized_update = self.deQuantizeUpdate(corrected_model_update, scale_factor)
         # 5. Update global model
-        self.updateGlobalModel(dequantized_update)
+        self.updateGlobalModel(corrected_model_update)
         self.round_number += 1
